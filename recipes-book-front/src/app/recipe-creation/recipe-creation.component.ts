@@ -11,11 +11,42 @@ import { of } from 'rxjs';
 })
 export class RecipeCreationComponent implements OnInit{
 
-  constructor(private formBuilder: FormBuilder, private service: RecipesService) { }
+  constructor(
+    private formBuilder: FormBuilder,
+    private service: RecipesService)
+  { }
 
+/**
+ * The first thing that comes to mind to implement the autosave feature
+ * is subscribing to the valueChanges observable of recipeForm in the
+ * ngOninit() instance of our RecipeCreationComponent. Every time the
+ * valueChanges observable emits a new form value, we should perform
+ * a save request to save the most recent value of the form
+ */
+  // ngOnInit(): void {
+  //   this.recipeForm.valueChanges
+  //     .subscribe(
+  //       formValue => {
+  //         this.service.saveRecipe(formValue);
+  //       }
+  //     );
+  // };
 
   ngOnInit(): void {
+    this.recipeForm.valueChanges
+      .subscribe(
+        formValue => {
+          this.service.saveRecipe(formValue).subscribe(
+            result => this.saveSuccess(result),
+            errors => this.handleErrors(errors)
+          );
+        }
+      );
   }
+
+  /**
+   * step 2 - recipeserivice saveRecipe()
+   */
 
   recipeForm = this.formBuilder.group({
     id: Math.floor(1000 + Math.random() * 9000),
@@ -29,6 +60,7 @@ export class RecipeCreationComponent implements OnInit{
     steps: ['']
   });
   tags = recipeTags.TAGS;
+
   valueChanges$ = this.recipeForm.valueChanges.pipe(
     concatMap(formValue => this.service.saveRecipe(formValue)),
     catchError(errors => of(errors)),
